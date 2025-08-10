@@ -395,6 +395,12 @@ class JSONSpreadsheetMapper {
         const exactMatches = mappedFields.filter(m => m.matchType === 'exact').length;
         const partialMatches = mappedFields.filter(m => m.matchType === 'partial').length;
 
+        // Store for download
+        this.lastExportData = {
+            pdfName: pdfName,
+            mappedFields: mappedFields
+        };
+
         const successMessage = `
             <div class="result-message success">
                 ✓ Successfully processed data for ${pdfName}
@@ -419,6 +425,21 @@ class JSONSpreadsheetMapper {
                 </div>
             </div>
             
+            <div class="download-section">
+                <h3>Download Options:</h3>
+                <div class="download-buttons">
+                    <button type="button" class="btn btn--primary btn--sm" onclick="mapper.downloadCSV()">
+                        📥 Download as CSV
+                    </button>
+                    <button type="button" class="btn btn--secondary btn--sm" onclick="mapper.downloadJSON()">
+                        📄 Download as JSON
+                    </button>
+                    <button type="button" class="btn btn--secondary btn--sm" onclick="mapper.copyToClipboard()">
+                        📋 Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+            
             <h3>Inserted Field Mappings:</h3>
             <div class="details-content">
 ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} (${field.matchType} match)`).join('\n')}
@@ -430,6 +451,95 @@ ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} ($
         
         // Scroll to results
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    downloadCSV() {
+        if (!this.lastExportData) return;
+        
+        const { pdfName, mappedFields } = this.lastExportData;
+        
+        // Create CSV header
+        const headers = ['PDF_Name', ...this.spreadsheetColumns];
+        
+        // Create data row
+        const rowData = [pdfName];
+        this.spreadsheetColumns.forEach(col => {
+            const mapping = mappedFields.find(m => m.spreadsheetColumn === col);
+            rowData.push(mapping ? String(mapping.value) : '');
+        });
+        
+        // Combine header and data
+        const csvContent = [
+            headers.join(','),
+            rowData.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
+        ].join('\n');
+        
+        // Download
+        this.downloadFile(csvContent, `${pdfName.replace('.pdf', '')}_mapped_data.csv`, 'text/csv');
+    }
+    
+    downloadJSON() {
+        if (!this.lastExportData) return;
+        
+        const { pdfName, mappedFields } = this.lastExportData;
+        
+        // Create structured JSON
+        const jsonData = {
+            pdfName: pdfName,
+            exportDate: new Date().toISOString(),
+            mappedData: {}
+        };
+        
+        // Add PDF_Name to mapped data
+        jsonData.mappedData['PDF_Name'] = pdfName;
+        
+        // Add all mapped fields
+        mappedFields.forEach(field => {
+            jsonData.mappedData[field.spreadsheetColumn] = field.value;
+        });
+        
+        // Download
+        const jsonContent = JSON.stringify(jsonData, null, 2);
+        this.downloadFile(jsonContent, `${pdfName.replace('.pdf', '')}_mapped_data.json`, 'application/json');
+    }
+    
+    copyToClipboard() {
+        if (!this.lastExportData) return;
+        
+        const { pdfName, mappedFields } = this.lastExportData;
+        
+        // Create tab-separated values for easy paste into Excel/Google Sheets
+        const headers = ['PDF_Name', ...mappedFields.map(f => f.spreadsheetColumn)];
+        const values = [pdfName, ...mappedFields.map(f => f.value)];
+        
+        const clipboardText = headers.join('\t') + '\n' + values.join('\t');
+        
+        navigator.clipboard.writeText(clipboardText).then(() => {
+            // Show success message
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '✓ Copied!';
+            button.classList.add('btn--success');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('btn--success');
+            }, 2000);
+        }).catch(err => {
+            alert('Failed to copy to clipboard');
+        });
+    }
+    
+    downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     truncateText(text, maxLength) {
@@ -444,6 +554,7 @@ ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} ($
 }
 
 // Initialize the application when DOM is loaded
+let mapper; // Global reference for button onclick handlers
 document.addEventListener('DOMContentLoaded', () => {
-    new JSONSpreadsheetMapper();
+    mapper = new JSONSpreadsheetMapper();
 });
