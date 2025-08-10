@@ -51,7 +51,108 @@ class JSONSpreadsheetMapper {
     initializeApp() {
         this.populatePDFDropdown();
         this.bindEventListeners();
-        this.loadExampleData();
+        this.loadSavedData();
+        
+        // Auto-save setup
+        this.setupAutoSave();
+    }
+    
+    setupAutoSave() {
+        // Save data periodically
+        setInterval(() => {
+            this.saveToLocalStorage();
+        }, 5000); // Auto-save every 5 seconds
+        
+        // Save before page unload
+        window.addEventListener('beforeunload', () => {
+            this.saveToLocalStorage();
+        });
+    }
+    
+    saveToLocalStorage() {
+        const jsonInput = document.getElementById('json-input').value;
+        const pdfName = document.getElementById('pdf-name').value;
+        
+        if (jsonInput || pdfName) {
+            const savedData = {
+                jsonInput: jsonInput,
+                pdfName: pdfName,
+                exactMatch: document.getElementById('exact-match').checked,
+                partialMatch: document.getElementById('partial-match').checked,
+                caseInsensitive: document.getElementById('case-insensitive').checked,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('jsonMapperData', JSON.stringify(savedData));
+        }
+    }
+    
+    loadSavedData() {
+        const saved = localStorage.getItem('jsonMapperData');
+        
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                
+                // Check if data is less than 24 hours old
+                const savedTime = new Date(data.timestamp);
+                const now = new Date();
+                const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24) {
+                    // Restore form data
+                    document.getElementById('json-input').value = data.jsonInput || '';
+                    document.getElementById('pdf-name').value = data.pdfName || '';
+                    document.getElementById('exact-match').checked = data.exactMatch !== false;
+                    document.getElementById('partial-match').checked = data.partialMatch !== false;
+                    document.getElementById('case-insensitive').checked = data.caseInsensitive !== false;
+                    
+                    // Process if JSON exists
+                    if (data.jsonInput) {
+                        this.validateAndProcessJSON();
+                    }
+                    
+                    // Show notification
+                    this.showDataRestoredNotification();
+                } else {
+                    // Data too old, load example instead
+                    this.loadExampleData();
+                }
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+                this.loadExampleData();
+            }
+        } else {
+            // No saved data, load example
+            this.loadExampleData();
+        }
+    }
+    
+    showDataRestoredNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'restore-notification';
+        notification.innerHTML = `
+            <span>✓ Previous session restored</span>
+            <button onclick="mapper.clearSavedData()" class="clear-saved">Clear</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+    
+    clearSavedData() {
+        localStorage.removeItem('jsonMapperData');
+        this.clearJSONInput();
+        
+        // Remove notification if exists
+        const notification = document.querySelector('.restore-notification');
+        if (notification) {
+            notification.remove();
+        }
     }
 
     populatePDFDropdown() {
@@ -124,6 +225,9 @@ class JSONSpreadsheetMapper {
         this.clearMappingPreview();
         this.updateStatistics(0, 0, 0);
         this.updateInsertButtonState();
+        
+        // Clear saved data
+        localStorage.removeItem('jsonMapperData');
     }
 
     validateAndProcessJSON() {
@@ -400,6 +504,9 @@ class JSONSpreadsheetMapper {
             pdfName: pdfName,
             mappedFields: mappedFields
         };
+        
+        // Save to history
+        this.saveToHistory(pdfName, mappedFields);
 
         const successMessage = `
             <div class="result-message success">
@@ -550,6 +657,58 @@ ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} ($
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    // History Management
+    saveToHistory(pdfName, mappedFields) {
+        let history = JSON.parse(localStorage.getItem('jsonMapperHistory') || '[]');
+        
+        const historyEntry = {
+            id: Date.now(),
+            pdfName: pdfName,
+            mappedFields: mappedFields,
+            timestamp: new Date().toISOString(),
+            fieldCount: mappedFields.length
+        };
+        
+        // Add to beginning of history
+        history.unshift(historyEntry);
+        
+        // Keep only last 20 entries
+        history = history.slice(0, 20);
+        
+        localStorage.setItem('jsonMapperHistory', JSON.stringify(history));
+    }
+    
+    getHistory() {
+        return JSON.parse(localStorage.getItem('jsonMapperHistory') || '[]');
+    }
+    
+    loadFromHistory(historyId) {
+        const history = this.getHistory();
+        const entry = history.find(h => h.id === historyId);
+        
+        if (entry) {
+            // Create JSON object from mapped fields
+            const jsonObject = {};
+            entry.mappedFields.forEach(field => {
+                jsonObject[field.jsonField] = field.value;
+            });
+            
+            // Set the JSON input
+            document.getElementById('json-input').value = JSON.stringify(jsonObject, null, 2);
+            document.getElementById('pdf-name').value = entry.pdfName;
+            
+            // Process the JSON
+            this.validateAndProcessJSON();
+        }
+    }
+    
+    clearHistory() {
+        if (confirm('Are you sure you want to clear all mapping history?')) {
+            localStorage.removeItem('jsonMapperHistory');
+            alert('History cleared successfully');
+        }
     }
 }
 
