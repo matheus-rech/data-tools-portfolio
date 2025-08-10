@@ -14,14 +14,12 @@ class JSONSpreadsheetMapper {
             "predictors_poor_outcome_surgical_group"
         ];
 
-        this.pdfNames = [
-            "Lindeskog2018.pdf", "Champeaux2019.pdf", "Chen1992.pdf", "Fernandes2022.pdf",
-            "Hernandez-Duranetal..pdf", "HernandezDuran2023.pdf", "Hornig1994.pdf", "Jauss1999.pdf",
-            "Kim2016.pdf", "Kudo2007(1).pdf", "Kwon2021.pdf", "Lee2019.pdf", "Mattar2021.pdf",
-            "Pfefferkorn2009.pdf", "Raco2003.pdf", "Taylor2020.pdf", "Tsitsopoulos2011_2.pdf",
-            "Tsitsopoulos2011.pdf", "Wang2022.pdf", "Winslow2023.pdf", "Won2023.pdf",
-            "wonetal..pdf", "Won2024.pdf", "Wu2023.pdf"
-        ];
+        // Load PDF names from localStorage or use defaults
+        this.loadPDFNames();
+        
+        // Spreadsheet data storage
+        this.worksheets = this.loadWorksheets();
+        this.currentWorksheet = this.getCurrentWorksheet();
 
         this.exampleJSON = {
             "study_design": "Data was retrospectively collected from patient records, CT/MRI scans and surgical protocols.",
@@ -47,6 +45,155 @@ class JSONSpreadsheetMapper {
         
         this.initializeApp();
     }
+    
+    // PDF Name Management
+    loadPDFNames() {
+        const saved = localStorage.getItem('pdfNamesList');
+        if (saved) {
+            this.pdfNames = JSON.parse(saved);
+        } else {
+            // Default PDF names
+            this.pdfNames = [
+                "Lindeskog2018.pdf", "Champeaux2019.pdf", "Chen1992.pdf", "Fernandes2022.pdf",
+                "Hernandez-Duranetal..pdf", "HernandezDuran2023.pdf", "Hornig1994.pdf", "Jauss1999.pdf",
+                "Kim2016.pdf", "Kudo2007(1).pdf", "Kwon2021.pdf", "Lee2019.pdf", "Mattar2021.pdf",
+                "Pfefferkorn2009.pdf", "Raco2003.pdf", "Taylor2020.pdf", "Tsitsopoulos2011_2.pdf",
+                "Tsitsopoulos2011.pdf", "Wang2022.pdf", "Winslow2023.pdf", "Won2023.pdf",
+                "wonetal..pdf", "Won2024.pdf", "Wu2023.pdf"
+            ];
+        }
+    }
+    
+    savePDFNames() {
+        localStorage.setItem('pdfNamesList', JSON.stringify(this.pdfNames));
+    }
+    
+    addPDFName(name) {
+        if (!this.pdfNames.includes(name)) {
+            this.pdfNames.push(name);
+            this.pdfNames.sort();
+            this.savePDFNames();
+            this.populatePDFDropdown();
+        }
+    }
+    
+    removePDFName(name) {
+        const index = this.pdfNames.indexOf(name);
+        if (index > -1) {
+            this.pdfNames.splice(index, 1);
+            this.savePDFNames();
+            this.populatePDFDropdown();
+        }
+    }
+    
+    // Worksheet Management
+    loadWorksheets() {
+        const saved = localStorage.getItem('worksheets');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+        return {
+            'default': {
+                name: 'Default Worksheet',
+                data: [],
+                created: new Date().toISOString(),
+                modified: new Date().toISOString()
+            }
+        };
+    }
+    
+    getCurrentWorksheet() {
+        const current = localStorage.getItem('currentWorksheet') || 'default';
+        if (!this.worksheets[current]) {
+            return 'default';
+        }
+        return current;
+    }
+    
+    saveWorksheets() {
+        localStorage.setItem('worksheets', JSON.stringify(this.worksheets));
+        localStorage.setItem('currentWorksheet', this.currentWorksheet);
+    }
+    
+    createWorksheet(name) {
+        const id = Date.now().toString();
+        this.worksheets[id] = {
+            name: name,
+            data: [],
+            created: new Date().toISOString(),
+            modified: new Date().toISOString()
+        };
+        this.currentWorksheet = id;
+        this.saveWorksheets();
+        return id;
+    }
+    
+    switchWorksheet(id) {
+        if (this.worksheets[id]) {
+            this.currentWorksheet = id;
+            this.saveWorksheets();
+            this.updateSpreadsheetView();
+        }
+    }
+    
+    deleteWorksheet(id) {
+        if (id !== 'default' && this.worksheets[id]) {
+            delete this.worksheets[id];
+            if (this.currentWorksheet === id) {
+                this.currentWorksheet = 'default';
+            }
+            this.saveWorksheets();
+            this.updateSpreadsheetView();
+        }
+    }
+    
+    // Add row to current worksheet
+    addRowToWorksheet(pdfName, mappedFields) {
+        const worksheet = this.worksheets[this.currentWorksheet];
+        const row = {
+            id: Date.now(),
+            PDF_Name: pdfName
+        };
+        
+        // Add all mapped fields to row
+        mappedFields.forEach(field => {
+            row[field.spreadsheetColumn] = field.value;
+        });
+        
+        // Add empty values for unmapped columns
+        this.spreadsheetColumns.forEach(col => {
+            if (!(col in row)) {
+                row[col] = '';
+            }
+        });
+        
+        worksheet.data.push(row);
+        worksheet.modified = new Date().toISOString();
+        this.saveWorksheets();
+        
+        return row;
+    }
+    
+    // Remove row from worksheet
+    removeRowFromWorksheet(rowId) {
+        const worksheet = this.worksheets[this.currentWorksheet];
+        worksheet.data = worksheet.data.filter(row => row.id !== rowId);
+        worksheet.modified = new Date().toISOString();
+        this.saveWorksheets();
+        this.updateSpreadsheetView();
+    }
+    
+    // Update spreadsheet view
+    updateSpreadsheetView() {
+        // This will be called to refresh the UI when worksheet changes
+        const event = new CustomEvent('worksheetChanged', {
+            detail: {
+                worksheet: this.worksheets[this.currentWorksheet],
+                worksheetId: this.currentWorksheet
+            }
+        });
+        document.dispatchEvent(event);
+    }
 
     initializeApp() {
         this.populatePDFDropdown();
@@ -55,6 +202,131 @@ class JSONSpreadsheetMapper {
         
         // Auto-save setup
         this.setupAutoSave();
+        
+        // Initialize spreadsheet view
+        this.renderSpreadsheetView();
+        
+        // Listen for worksheet changes
+        document.addEventListener('worksheetChanged', () => {
+            this.renderSpreadsheetView();
+        });
+    }
+    
+    renderSpreadsheetView() {
+        const worksheet = this.worksheets[this.currentWorksheet];
+        const container = document.getElementById('spreadsheet-view');
+        const worksheetNameEl = document.getElementById('worksheet-name');
+        const rowCountEl = document.getElementById('row-count');
+        
+        // Update worksheet name
+        worksheetNameEl.textContent = worksheet.name;
+        rowCountEl.textContent = `${worksheet.data.length} row${worksheet.data.length !== 1 ? 's' : ''}`;
+        
+        if (worksheet.data.length === 0) {
+            container.innerHTML = '<div class="no-data-message">No data yet. Process JSON data above to add rows.</div>';
+            return;
+        }
+        
+        // Create table
+        const table = document.createElement('table');
+        table.className = 'spreadsheet-table';
+        
+        // Create header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>Actions</th>';
+        
+        // Only show first few columns to fit screen
+        const displayColumns = ['PDF_Name', 'study_design', 'total_patients', 'procedure_type', 'mortality_rates'];
+        displayColumns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            headerRow.appendChild(th);
+        });
+        headerRow.innerHTML += '<th>...</th>';
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Create body
+        const tbody = document.createElement('tbody');
+        worksheet.data.forEach(row => {
+            const tr = document.createElement('tr');
+            
+            // Actions column
+            tr.innerHTML = `
+                <td>
+                    <button class="btn-delete" onclick="mapper.removeRowFromWorksheet(${row.id})" title="Delete row">🗑️</button>
+                </td>
+            `;
+            
+            // Data columns
+            displayColumns.forEach(col => {
+                const td = document.createElement('td');
+                const value = row[col] || '';
+                td.textContent = this.truncateText(String(value), 30);
+                td.title = String(value);
+                tr.appendChild(td);
+            });
+            
+            // More indicator
+            tr.innerHTML += '<td>...</td>';
+            
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        
+        container.innerHTML = '';
+        container.appendChild(table);
+    }
+    
+    showWorksheetManager() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        
+        const worksheetsList = Object.entries(this.worksheets).map(([id, ws]) => `
+            <div class="worksheet-item ${id === this.currentWorksheet ? 'active' : ''}">
+                <span class="worksheet-name">${ws.name}</span>
+                <span class="worksheet-info">${ws.data.length} rows</span>
+                <div class="worksheet-actions">
+                    ${id === this.currentWorksheet ? '<span class="current-badge">Current</span>' : 
+                      `<button onclick="mapper.switchWorksheet('${id}')">Switch</button>`}
+                    ${id !== 'default' ? `<button onclick="mapper.deleteWorksheet('${id}')">Delete</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>Worksheet Manager</h2>
+                <div class="worksheets-list">
+                    ${worksheetsList}
+                </div>
+                <div class="worksheet-create">
+                    <input type="text" id="new-worksheet-name" placeholder="New worksheet name...">
+                    <button onclick="mapper.createWorksheetFromModal()">Create New Worksheet</button>
+                </div>
+                <button class="modal-close">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('modal-close')) {
+                modal.remove();
+            }
+        });
+    }
+    
+    createWorksheetFromModal() {
+        const input = document.getElementById('new-worksheet-name');
+        const name = input.value.trim();
+        
+        if (name) {
+            this.createWorksheet(name);
+            document.querySelector('.modal-overlay').remove();
+            this.renderSpreadsheetView();
+        }
     }
     
     setupAutoSave() {
@@ -157,12 +429,28 @@ class JSONSpreadsheetMapper {
 
     populatePDFDropdown() {
         const select = document.getElementById('pdf-name');
+        
+        // Clear existing options
+        select.innerHTML = '<option value="">Select a PDF/Study...</option>';
+        
+        // Add existing PDF names
         this.pdfNames.forEach(pdfName => {
             const option = document.createElement('option');
             option.value = pdfName;
             option.textContent = pdfName;
             select.appendChild(option);
         });
+        
+        // Add separator and "Add new..." option
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '──────────';
+        select.appendChild(separator);
+        
+        const addNewOption = document.createElement('option');
+        addNewOption.value = '__add_new__';
+        addNewOption.textContent = '➕ Add new PDF name...';
+        select.appendChild(addNewOption);
     }
 
     bindEventListeners() {
@@ -199,7 +487,16 @@ class JSONSpreadsheetMapper {
         });
 
         // PDF name selection
-        document.getElementById('pdf-name').addEventListener('change', () => {
+        document.getElementById('pdf-name').addEventListener('change', (e) => {
+            if (e.target.value === '__add_new__') {
+                const newName = prompt('Enter new PDF/Study name:');
+                if (newName && newName.trim()) {
+                    this.addPDFName(newName.trim());
+                    e.target.value = newName.trim();
+                } else {
+                    e.target.value = '';
+                }
+            }
             this.updateInsertButtonState();
         });
     }
@@ -482,9 +779,15 @@ class JSONSpreadsheetMapper {
         button.disabled = true;
 
         setTimeout(() => {
+            // Add row to worksheet
+            const newRow = this.addRowToWorksheet(pdfName, mappedFields);
+            
             this.showResults(pdfName, mappedFields);
             button.textContent = originalText;
             this.updateInsertButtonState();
+            
+            // Update spreadsheet view
+            this.updateSpreadsheetView();
         }, 1500);
     }
 
@@ -561,6 +864,31 @@ ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} ($
     }
 
     downloadCSV() {
+        const worksheet = this.worksheets[this.currentWorksheet];
+        
+        // Create CSV header
+        const headers = this.spreadsheetColumns;
+        
+        // Create data rows
+        const rows = worksheet.data.map(row => {
+            return this.spreadsheetColumns.map(col => {
+                const value = row[col] || '';
+                return `"${String(value).replace(/"/g, '""')}"`;
+            }).join(',');
+        });
+        
+        // Combine header and data
+        const csvContent = [
+            headers.join(','),
+            ...rows
+        ].join('\n');
+        
+        // Download
+        const filename = `${worksheet.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+        this.downloadFile(csvContent, filename, 'text/csv');
+    }
+    
+    downloadCurrentRowCSV() {
         if (!this.lastExportData) return;
         
         const { pdfName, mappedFields } = this.lastExportData;
@@ -582,7 +910,7 @@ ${mappedFields.map(field => `${field.jsonField} -> ${field.spreadsheetColumn} ($
         ].join('\n');
         
         // Download
-        this.downloadFile(csvContent, `${pdfName.replace('.pdf', '')}_mapped_data.csv`, 'text/csv');
+        this.downloadFile(csvContent, `${pdfName.replace('.pdf', '')}_single_row.csv`, 'text/csv');
     }
     
     downloadJSON() {

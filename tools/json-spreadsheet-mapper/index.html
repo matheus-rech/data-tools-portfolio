@@ -130,6 +130,27 @@
                     <div class="results-content" id="results-content"></div>
                 </div>
             </section>
+
+            <!-- Spreadsheet View Section -->
+            <section class="spreadsheet-section">
+                <div class="spreadsheet-header">
+                    <h2>Current Worksheet: <span id="worksheet-name">Default Worksheet</span></h2>
+                    <div class="worksheet-controls">
+                        <button type="button" class="btn btn--secondary btn--sm" onclick="mapper.showWorksheetManager()">
+                            📊 Manage Worksheets
+                        </button>
+                        <button type="button" class="btn btn--primary btn--sm" onclick="mapper.downloadCSV()">
+                            📥 Download Full Spreadsheet
+                        </button>
+                        <span class="row-count" id="row-count">0 rows</span>
+                    </div>
+                </div>
+                <div class="spreadsheet-container">
+                    <div id="spreadsheet-view" class="spreadsheet-view">
+                        <div class="no-data-message">No data yet. Process JSON data above to add rows.</div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
