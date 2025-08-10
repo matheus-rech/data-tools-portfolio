@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to Spreadsheet Field Mapper</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>JSON to Spreadsheet Field Mapper</h1>
+            <p class="subtitle">Automatically map JSON fields to spreadsheet columns with intelligent field matching</p>
+            <p class="description">Extract and organize medical research data from JSON format into structured spreadsheet format for analysis and research purposes.</p>
+        </header>
+
+        <!-- Main Interface -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="input-grid">
+                    <!-- JSON Input -->
+                    <div class="json-input-container">
+                        <div class="form-group">
+                            <label for="json-input" class="form-label">
+                                JSON Data Input
+                                <span class="validation-status" id="json-status"></span>
+                            </label>
+                            <textarea 
+                                id="json-input" 
+                                class="form-control json-textarea" 
+                                placeholder="Paste your JSON data here..."
+                                rows="12"
+                            ></textarea>
+                            <div class="input-actions">
+                                <button type="button" class="btn btn--secondary btn--sm" id="load-example">Load Example</button>
+                                <button type="button" class="btn btn--secondary btn--sm" id="clear-json">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Name Selection -->
+                    <div class="pdf-input-container">
+                        <div class="form-group">
+                            <label for="pdf-name" class="form-label">PDF/Study Name</label>
+                            <select id="pdf-name" class="form-control">
+                                <option value="">Select a PDF/Study...</option>
+                            </select>
+                        </div>
+
+                        <!-- Mapping Controls -->
+                        <div class="mapping-controls">
+                            <h3>Mapping Options</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="exact-match" checked>
+                                    Exact Match
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="partial-match" checked>
+                                    Partial Match
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="case-insensitive" checked>
+                                    Case Insensitive
+                                </label>
+                            </div>
+                            <button type="button" class="btn btn--secondary btn--sm" id="toggle-details">
+                                Show Mapping Details
+                            </button>
+                        </div>
+
+                        <!-- Statistics Display -->
+                        <div class="stats-container">
+                            <h3>Field Statistics</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <span class="stat-label">JSON Fields:</span>
+                                    <span class="stat-value" id="json-fields-count">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Mapped:</span>
+                                    <span class="stat-value" id="mapped-count">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Unmapped:</span>
+                                    <span class="stat-value" id="unmapped-count">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mapping Preview Section -->
+            <section class="mapping-section">
+                <div class="section-header">
+                    <h2>Field Mapping Preview</h2>
+                    <div class="mapping-legend">
+                        <span class="legend-item exact-match-legend">Exact Match</span>
+                        <span class="legend-item partial-match-legend">Partial Match</span>
+                        <span class="legend-item no-match-legend">No Match</span>
+                    </div>
+                </div>
+                
+                <div class="mapping-preview" id="mapping-preview">
+                    <div class="no-data-message">
+                        Enter JSON data to see field mappings
+                    </div>
+                </div>
+
+                <div class="mapping-details hidden" id="mapping-details">
+                    <h3>Detailed Field Mapping</h3>
+                    <div class="details-content" id="details-content"></div>
+                </div>
+            </section>
+
+            <!-- Action Section -->
+            <section class="action-section">
+                <button type="button" class="btn btn--primary btn--lg" id="insert-data" disabled>
+                    Insert Data into Spreadsheet
+                </button>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section hidden" id="results-section">
+                <div class="results-card">
+                    <h2>Processing Results</h2>
+                    <div class="results-content" id="results-content"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

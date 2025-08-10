@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Tools Portfolio - Medical Research & Analysis Tools</title>
+    <link rel="stylesheet" href="portfolio-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="portfolio-container">
+        <!-- Header Section -->
+        <header class="portfolio-header">
+            <div class="header-content">
+                <h1 class="portfolio-title">Data Tools Portfolio</h1>
+                <p class="portfolio-subtitle">A collection of specialized tools for medical research data processing and analysis</p>
+                <div class="header-stats">
+                    <span class="stat-badge" id="tool-count">1 Tool</span>
+                    <span class="stat-badge">Open Source</span>
+                    <span class="stat-badge">Free to Use</span>
+                </div>
+            </div>
+            <div class="header-decoration"></div>
+        </header>
+
+        <!-- Search and Filter Section -->
+        <section class="filter-section">
+            <div class="filter-container">
+                <div class="search-box">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="search-tools" placeholder="Search tools..." class="search-input">
+                </div>
+                <div class="filter-tags">
+                    <button class="filter-tag active" data-category="all">All Tools</button>
+                    <button class="filter-tag" data-category="medical">Medical Research</button>
+                    <button class="filter-tag" data-category="data">Data Processing</button>
+                    <button class="filter-tag" data-category="visualization">Visualization</button>
+                    <button class="filter-tag" data-category="extraction">Extraction</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Gallery Grid -->
+        <main class="tools-gallery">
+            <div class="tools-grid" id="tools-grid">
+                <!-- JSON Spreadsheet Mapper Tool -->
+                <article class="tool-card" data-categories="medical,data,extraction" data-name="JSON Spreadsheet Mapper">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <line x1="15" y1="3" x2="15" y2="21"></line>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="3" y1="15" x2="21" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="tool-badges">
+                            <span class="badge badge-active">Active</span>
+                            <span class="badge badge-version">v1.0</span>
+                        </div>
+                    </div>
+                    <h3 class="tool-title">JSON Spreadsheet Mapper</h3>
+                    <p class="tool-description">Automatically map JSON fields from medical research papers to spreadsheet columns with intelligent field matching algorithms.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Field Mapping</span>
+                        <span class="feature-tag">JSON Processing</span>
+                        <span class="feature-tag">Medical Data</span>
+                    </div>
+                    <div class="tool-stats">
+                        <div class="stat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span>Research Teams</span>
+                        </div>
+                        <div class="stat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Real-time</span>
+                        </div>
+                    </div>
+                    <a href="tools/json-spreadsheet-mapper/" class="tool-link">
+                        <span>Open Tool</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Placeholder for Future Tools -->
+                <article class="tool-card tool-placeholder" data-categories="medical,visualization" data-name="Coming Soon">
+                    <div class="tool-card-header">
+                        <div class="tool-icon placeholder-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </div>
+                        <div class="tool-badges">
+                            <span class="badge badge-coming">Coming Soon</span>
+                        </div>
+                    </div>
+                    <h3 class="tool-title">Medical Data Visualizer</h3>
+                    <p class="tool-description">Interactive visualization tool for medical research data with customizable charts and statistical analysis.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Charts</span>
+                        <span class="feature-tag">Statistics</span>
+                        <span class="feature-tag">Interactive</span>
+                    </div>
+                    <div class="tool-link disabled">
+                        <span>In Development</span>
+                    </div>
+                </article>
+
+                <!-- Another Placeholder -->
+                <article class="tool-card tool-placeholder" data-categories="data,extraction" data-name="Coming Soon">
+                    <div class="tool-card-header">
+                        <div class="tool-icon placeholder-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </div>
+                        <div class="tool-badges">
+                            <span class="badge badge-coming">Coming Soon</span>
+                        </div>
+                    </div>
+                    <h3 class="tool-title">PDF Data Extractor</h3>
+                    <p class="tool-description">Extract structured data from medical research PDFs with AI-powered text recognition and parsing.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">PDF Processing</span>
+                        <span class="feature-tag">AI Extraction</span>
+                        <span class="feature-tag">Batch Processing</span>
+                    </div>
+                    <div class="tool-link disabled">
+                        <span>In Development</span>
+                    </div>
+                </article>
+
+                <!-- Add Tool Card -->
+                <article class="tool-card add-tool-card">
+                    <div class="add-tool-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        <h3>Add New Tool</h3>
+                        <p>Have a tool idea? Add it to the portfolio</p>
+                    </div>
+                </article>
+            </div>
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="portfolio-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About This Portfolio</h4>
+                    <p>A collection of open-source tools designed to streamline medical research data processing and analysis workflows.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Technologies</h4>
+                    <div class="tech-stack">
+                        <span class="tech-badge">JavaScript</span>
+                        <span class="tech-badge">HTML5</span>
+                        <span class="tech-badge">CSS3</span>
+                        <span class="tech-badge">GitHub Pages</span>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/yourusername/data-tools" target="_blank">GitHub Repository</a></li>
+                        <li><a href="#" id="documentation-link">Documentation</a></li>
+                        <li><a href="#" id="contact-link">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Data Tools Portfolio. All tools are free to use.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="no-results hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+            <path d="M11 8v3"></path>
+            <path d="M11 14h.01"></path>
+        </svg>
+        <p>No tools found matching your search</p>
+    </div>
+
+    <script src="portfolio.js"></script>
+</body>
+</html>
