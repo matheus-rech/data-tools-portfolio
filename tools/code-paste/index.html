@@ -3,8 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Paste & Download Tool</title>
+    <title>Code Paste & Download Tool - PWA Edition</title>
+    <meta name="description" content="Paste code snippets and download them with auto-detected file extensions. Supports 20+ programming languages with offline support.">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Prism.js for syntax highlighting (CDN for now) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
     <style>
+        :root {
+            --primary-gradient-start: #667eea;
+            --primary-gradient-end: #764ba2;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --shadow-color: rgba(0, 0, 0, 0.7);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,35 +48,93 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            transition: background 0.3s;
         }
 
         .container {
-            background: white;
+            background: var(--bg-primary);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
+            box-shadow: 0 20px 60px var(--shadow-color);
+            max-width: 900px;
             width: 100%;
             padding: 40px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header-left {
+            flex: 1;
         }
 
         h1 {
-            color: #333;
-            text-align: center;
+            color: var(--text-primary);
             margin-bottom: 10px;
             font-size: 2.5em;
         }
 
         .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
+            color: var(--text-secondary);
             font-size: 1.1em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--primary-gradient-start);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn.active {
+            background: var(--primary-gradient-start);
+            color: white;
+            border-color: var(--primary-gradient-start);
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         .code-container {
@@ -49,44 +142,100 @@
             margin-bottom: 20px;
         }
 
-        textarea {
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border-radius: 10px 10px 0 0;
+            border: 2px solid var(--border-color);
+            border-bottom: none;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .code-action-btn {
+            padding: 5px 10px;
+            border: none;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .code-action-btn:hover {
+            background: var(--primary-gradient-start);
+            color: white;
+        }
+
+        textarea, pre {
             width: 100%;
             min-height: 400px;
             padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 0 0 10px 10px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 14px;
             resize: vertical;
             transition: border-color 0.3s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        pre {
+            margin: 0;
+            overflow: auto;
+            display: none;
+        }
+
+        pre.active {
+            display: block;
         }
 
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-gradient-start);
         }
 
         .detection-info {
-            background: #f5f5f5;
+            background: var(--bg-secondary);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
             display: none;
+            animation: slideDown 0.3s ease;
         }
 
         .detection-info.active {
             display: block;
         }
 
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .detection-label {
             font-weight: bold;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 5px;
         }
 
         .detected-language {
             display: inline-block;
-            background: #667eea;
+            background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
             color: white;
             padding: 5px 15px;
             border-radius: 20px;
@@ -95,29 +244,32 @@
         }
 
         .confidence {
-            color: #666;
+            color: var(--text-secondary);
             font-size: 14px;
         }
 
         .filename-input {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 16px;
             transition: border-color 0.3s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         .filename-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-gradient-start);
         }
 
-        .button-group {
+        .action-buttons {
             display: flex;
             gap: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         button {
@@ -128,10 +280,13 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
             color: white;
         }
 
@@ -146,47 +301,424 @@
         }
 
         .btn-secondary {
-            background: #f5f5f5;
-            color: #333;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .btn-secondary:hover {
-            background: #e0e0e0;
+            background: var(--border-color);
         }
 
-        .language-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
+        .dropdown {
+            position: relative;
         }
 
-        .badge {
-            background: #f0f0f0;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .char-count {
-            text-align: right;
-            color: #999;
-            font-size: 12px;
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 5px;
             margin-top: 5px;
+            display: none;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.2s;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* History Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: var(--border-color);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .history-item:hover {
+            border-color: var(--primary-gradient-start);
+            transform: translateX(5px);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .history-language {
+            background: var(--primary-gradient-start);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .history-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .history-preview {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s;
+            z-index: 3000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-color: var(--error-color);
+        }
+
+        .toast.warning {
+            border-color: var(--warning-color);
+        }
+
+        /* Install Prompt */
+        .install-prompt {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 2px solid var(--primary-gradient-start);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1500;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .install-prompt.active {
+            display: block;
+            animation: slideUp 0.5s;
+        }
+
+        .install-prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .install-prompt-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .install-prompt-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .install-prompt-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .install-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .install-btn.primary {
+            background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+            color: white;
+        }
+
+        .install-btn.secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            z-index: 4000;
+        }
+
+        .offline-indicator.active {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-gradient-start);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📝 Code Paste Tool</h1>
-        <p class="subtitle">Paste your code and download it with the correct file extension</p>
+        <div class="header">
+            <div class="header-left">
+                <h1>📝 Code Paste Tool</h1>
+                <p class="subtitle">Paste, detect, download - now with offline support!</p>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="themeToggle" title="Toggle theme">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="historyBtn" title="View history">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                    </svg>
+                    <span class="badge" id="historyBadge" style="display: none;">0</span>
+                </button>
+                <button class="icon-btn" id="shareBtn" title="Share">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
         
         <div class="code-container">
+            <div class="code-header">
+                <div class="code-info">
+                    <span id="syntaxLabel">Plain Text</span>
+                </div>
+                <div class="code-actions">
+                    <button class="code-action-btn" id="copyBtn">Copy</button>
+                    <button class="code-action-btn" id="formatBtn">Format</button>
+                    <button class="code-action-btn" id="syntaxBtn">Syntax</button>
+                </div>
+            </div>
             <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
-            <div class="char-count" id="charCount">0 characters</div>
+            <pre id="codePreview" class="language-javascript"><code></code></pre>
         </div>
 
         <div class="detection-info" id="detectionInfo">
@@ -197,32 +729,115 @@
 
         <input type="text" id="filenameInput" class="filename-input" placeholder="Enter filename (e.g., main or script)">
 
-        <div class="button-group">
-            <button class="btn-primary" id="downloadBtn" disabled>Download File</button>
-            <button class="btn-secondary" id="clearBtn">Clear</button>
+        <div class="action-buttons">
+            <button class="btn-primary" id="downloadBtn" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download
+            </button>
+            
+            <div class="dropdown">
+                <button class="btn-secondary" id="exportBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    Export
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" id="exportPdf">Export as PDF</div>
+                    <div class="dropdown-item" id="exportMarkdown">Export as Markdown</div>
+                    <div class="dropdown-item" id="exportGist">Create Gist</div>
+                </div>
+            </div>
+            
+            <button class="btn-secondary" id="clearBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear
+            </button>
         </div>
 
-        <div class="language-badges">
-            <span class="badge">JavaScript</span>
-            <span class="badge">Python</span>
-            <span class="badge">Java</span>
-            <span class="badge">C++</span>
-            <span class="badge">HTML</span>
-            <span class="badge">CSS</span>
-            <span class="badge">PHP</span>
-            <span class="badge">Ruby</span>
-            <span class="badge">Go</span>
-            <span class="badge">Swift</span>
-            <span class="badge">Kotlin</span>
-            <span class="badge">TypeScript</span>
-            <span class="badge">Rust</span>
-            <span class="badge">SQL</span>
-            <span class="badge">Shell</span>
-            <span class="badge">And more...</span>
+        <div class="stats-bar">
+            <div class="stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                </svg>
+                <span id="charCount">0 characters</span>
+            </div>
+            <div class="stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"/>
+                    <line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                <span id="lineCount">0 lines</span>
+            </div>
+            <div class="stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="10" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span id="sizeEstimate">0 KB</span>
+            </div>
         </div>
     </div>
 
+    <!-- History Modal -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Recent Pastes</h2>
+                <button class="close-btn" id="closeHistory">✕</button>
+            </div>
+            <div id="historyList" class="history-list">
+                <div class="empty-state">No history yet. Start pasting code!</div>
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn-secondary" id="clearHistory">Clear All History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-header">
+            <span class="install-prompt-title">📱 Install App</span>
+            <button class="close-btn" id="dismissInstall">✕</button>
+        </div>
+        <p class="install-prompt-text">Install Code Paste Tool for offline access and a better experience!</p>
+        <div class="install-prompt-actions">
+            <button class="install-btn primary" id="installBtn">Install</button>
+            <button class="install-btn secondary" id="laterBtn">Later</button>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        🔌 Offline Mode - Working locally
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- External Libraries (will be cached for offline) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
     <script>
+        // Language detection patterns (same as before, but enhanced)
         const languagePatterns = {
             javascript: {
                 extensions: ['.js', '.jsx'],
@@ -542,17 +1157,106 @@
             }
         };
 
-        const codeInput = document.getElementById('codeInput');
-        const filenameInput = document.getElementById('filenameInput');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const detectionInfo = document.getElementById('detectionInfo');
-        const detectedLang = document.getElementById('detectedLang');
-        const confidence = document.getElementById('confidence');
-        const charCount = document.getElementById('charCount');
+        // App State
+        let appState = {
+            detectedLanguage: null,
+            detectedExtension: '.txt',
+            history: [],
+            theme: 'light',
+            syntaxHighlighting: false,
+            deferredPrompt: null
+        };
 
-        let detectedLanguage = null;
-        let detectedExtension = '.txt';
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            loadHistory();
+            checkThemePreference();
+            setupEventListeners();
+            registerServiceWorker();
+            checkForSharedCode();
+            setupKeyboardShortcuts();
+            setupOnlineOfflineIndicator();
+        });
+
+        function initializeApp() {
+            // Load saved preferences
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                appState.theme = savedTheme;
+                applyTheme(savedTheme);
+            }
+
+            // Update history badge
+            updateHistoryBadge();
+        }
+
+        function setupEventListeners() {
+            const codeInput = document.getElementById('codeInput');
+            const filenameInput = document.getElementById('filenameInput');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const themeToggle = document.getElementById('themeToggle');
+            const historyBtn = document.getElementById('historyBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const formatBtn = document.getElementById('formatBtn');
+            const syntaxBtn = document.getElementById('syntaxBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const exportPdf = document.getElementById('exportPdf');
+            const exportMarkdown = document.getElementById('exportMarkdown');
+            const exportGist = document.getElementById('exportGist');
+            const closeHistory = document.getElementById('closeHistory');
+            const clearHistory = document.getElementById('clearHistory');
+            const historyModal = document.getElementById('historyModal');
+
+            // Code input events
+            codeInput.addEventListener('input', updateDetection);
+            codeInput.addEventListener('paste', () => {
+                setTimeout(updateDetection, 10);
+            });
+
+            // Button events
+            downloadBtn.addEventListener('click', downloadFile);
+            clearBtn.addEventListener('click', clearAll);
+            themeToggle.addEventListener('click', toggleTheme);
+            historyBtn.addEventListener('click', showHistory);
+            shareBtn.addEventListener('click', shareCode);
+            copyBtn.addEventListener('click', copyCode);
+            formatBtn.addEventListener('click', formatCode);
+            syntaxBtn.addEventListener('click', toggleSyntax);
+
+            // Export dropdown
+            exportBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportBtn.parentElement.classList.toggle('active');
+            });
+
+            exportPdf.addEventListener('click', exportAsPdf);
+            exportMarkdown.addEventListener('click', exportAsMarkdown);
+            exportGist.addEventListener('click', createGist);
+
+            // History modal
+            closeHistory.addEventListener('click', () => {
+                historyModal.classList.remove('active');
+            });
+
+            clearHistory.addEventListener('click', clearAllHistory);
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.dropdown').forEach(d => {
+                    d.classList.remove('active');
+                });
+            });
+
+            // Enter key in filename input
+            filenameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !downloadBtn.disabled) {
+                    downloadFile();
+                }
+            });
+        }
 
         function detectLanguage(code) {
             const scores = {};
@@ -603,42 +1307,62 @@
         }
 
         function updateDetection() {
+            const codeInput = document.getElementById('codeInput');
             const code = codeInput.value.trim();
             
             if (code) {
                 const result = detectLanguage(code);
                 
                 if (result.language) {
-                    detectedLanguage = result.language;
-                    detectedExtension = result.extension;
-                    detectedLang.textContent = result.language.charAt(0).toUpperCase() + result.language.slice(1);
-                    confidence.textContent = `(${result.confidence}% confidence)`;
-                    detectionInfo.classList.add('active');
+                    appState.detectedLanguage = result.language;
+                    appState.detectedExtension = result.extension;
+                    document.getElementById('detectedLang').textContent = 
+                        result.language.charAt(0).toUpperCase() + result.language.slice(1);
+                    document.getElementById('confidence').textContent = `(${result.confidence}% confidence)`;
+                    document.getElementById('syntaxLabel').textContent = 
+                        result.language.charAt(0).toUpperCase() + result.language.slice(1);
                 } else {
-                    detectedLanguage = null;
-                    detectedExtension = '.txt';
-                    detectedLang.textContent = 'Plain Text';
-                    confidence.textContent = '';
-                    detectionInfo.classList.add('active');
+                    appState.detectedLanguage = null;
+                    appState.detectedExtension = '.txt';
+                    document.getElementById('detectedLang').textContent = 'Plain Text';
+                    document.getElementById('confidence').textContent = '';
+                    document.getElementById('syntaxLabel').textContent = 'Plain Text';
                 }
                 
-                downloadBtn.disabled = false;
+                document.getElementById('detectionInfo').classList.add('active');
+                document.getElementById('downloadBtn').disabled = false;
+                
+                // Update stats
+                updateStats(code);
+                
+                // Save to history
+                saveToHistory(code, appState.detectedLanguage);
             } else {
-                detectionInfo.classList.remove('active');
-                downloadBtn.disabled = true;
-                detectedLanguage = null;
-                detectedExtension = '.txt';
+                document.getElementById('detectionInfo').classList.remove('active');
+                document.getElementById('downloadBtn').disabled = true;
+                appState.detectedLanguage = null;
+                appState.detectedExtension = '.txt';
+                updateStats('');
             }
+        }
+
+        function updateStats(code) {
+            const lines = code ? code.split('\n').length : 0;
+            const chars = code.length;
+            const bytes = new Blob([code]).size;
+            const kb = (bytes / 1024).toFixed(2);
             
-            charCount.textContent = `${code.length} characters`;
+            document.getElementById('charCount').textContent = `${chars} characters`;
+            document.getElementById('lineCount').textContent = `${lines} lines`;
+            document.getElementById('sizeEstimate').textContent = `${kb} KB`;
         }
 
         function downloadFile() {
-            const code = codeInput.value;
+            const code = document.getElementById('codeInput').value;
             if (!code) return;
             
-            const filename = filenameInput.value.trim() || 'code';
-            const fullFilename = filename.includes('.') ? filename : filename + detectedExtension;
+            const filename = document.getElementById('filenameInput').value.trim() || 'code';
+            const fullFilename = filename.includes('.') ? filename : filename + appState.detectedExtension;
             
             const blob = new Blob([code], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
@@ -649,32 +1373,519 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            
+            showToast('File downloaded successfully!', 'success');
         }
 
         function clearAll() {
-            codeInput.value = '';
-            filenameInput.value = '';
-            detectionInfo.classList.remove('active');
-            downloadBtn.disabled = true;
-            charCount.textContent = '0 characters';
-            detectedLanguage = null;
-            detectedExtension = '.txt';
+            document.getElementById('codeInput').value = '';
+            document.getElementById('filenameInput').value = '';
+            document.getElementById('detectionInfo').classList.remove('active');
+            document.getElementById('downloadBtn').disabled = true;
+            updateStats('');
+            appState.detectedLanguage = null;
+            appState.detectedExtension = '.txt';
+            
+            showToast('Cleared!', 'success');
         }
 
-        // Event listeners
-        codeInput.addEventListener('input', updateDetection);
-        codeInput.addEventListener('paste', () => {
-            setTimeout(updateDetection, 10);
+        // Theme Management
+        function checkThemePreference() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (!savedTheme) {
+                appState.theme = prefersDark ? 'dark' : 'light';
+            } else {
+                appState.theme = savedTheme;
+            }
+            
+            applyTheme(appState.theme);
+        }
+
+        function toggleTheme() {
+            appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+            applyTheme(appState.theme);
+            localStorage.setItem('theme', appState.theme);
+            
+            document.getElementById('themeToggle').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('themeToggle').classList.remove('active');
+            }, 300);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
+        // History Management
+        function loadHistory() {
+            const saved = localStorage.getItem('codeHistory');
+            if (saved) {
+                appState.history = JSON.parse(saved);
+                updateHistoryBadge();
+            }
+        }
+
+        function saveToHistory(code, language) {
+            if (!code || code.length < 10) return;
+            
+            const historyItem = {
+                id: Date.now(),
+                code: code,
+                language: language || 'plain',
+                timestamp: new Date().toISOString(),
+                preview: code.substring(0, 100)
+            };
+            
+            // Remove if already exists (to avoid duplicates)
+            appState.history = appState.history.filter(item => 
+                item.code !== code
+            );
+            
+            // Add to beginning
+            appState.history.unshift(historyItem);
+            
+            // Keep only last 10
+            if (appState.history.length > 10) {
+                appState.history = appState.history.slice(0, 10);
+            }
+            
+            localStorage.setItem('codeHistory', JSON.stringify(appState.history));
+            updateHistoryBadge();
+        }
+
+        function updateHistoryBadge() {
+            const badge = document.getElementById('historyBadge');
+            if (appState.history.length > 0) {
+                badge.textContent = appState.history.length;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const historyList = document.getElementById('historyList');
+            
+            if (appState.history.length === 0) {
+                historyList.innerHTML = '<div class="empty-state">No history yet. Start pasting code!</div>';
+            } else {
+                historyList.innerHTML = appState.history.map(item => `
+                    <div class="history-item" data-id="${item.id}">
+                        <div class="history-item-header">
+                            <span class="history-language">${item.language || 'plain'}</span>
+                            <span class="history-time">${formatTime(item.timestamp)}</span>
+                        </div>
+                        <div class="history-preview">${item.preview}...</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                historyList.querySelectorAll('.history-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const id = parseInt(el.dataset.id);
+                        const item = appState.history.find(h => h.id === id);
+                        if (item) {
+                            document.getElementById('codeInput').value = item.code;
+                            updateDetection();
+                            modal.classList.remove('active');
+                            showToast('Code restored from history', 'success');
+                        }
+                    });
+                });
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function clearAllHistory() {
+            if (confirm('Are you sure you want to clear all history?')) {
+                appState.history = [];
+                localStorage.removeItem('codeHistory');
+                updateHistoryBadge();
+                document.getElementById('historyModal').classList.remove('active');
+                showToast('History cleared', 'success');
+            }
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Share functionality
+        function shareCode() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) {
+                showToast('Nothing to share!', 'warning');
+                return;
+            }
+            
+            // Compress and encode
+            const compressed = LZString.compressToEncodedURIComponent(code);
+            const shareUrl = `${window.location.origin}${window.location.pathname}#${compressed}`;
+            
+            // Check URL length
+            if (shareUrl.length > 2000) {
+                showToast('Code too large for URL sharing. Consider using Gist export.', 'warning');
+                return;
+            }
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast('Share link copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy link', 'error');
+            });
+        }
+
+        function checkForSharedCode() {
+            if (window.location.hash) {
+                const compressed = window.location.hash.substring(1);
+                try {
+                    const code = LZString.decompressFromEncodedURIComponent(compressed);
+                    if (code) {
+                        document.getElementById('codeInput').value = code;
+                        updateDetection();
+                        showToast('Code loaded from share link', 'success');
+                    }
+                } catch (e) {
+                    console.error('Failed to load shared code', e);
+                }
+            }
+        }
+
+        // Copy functionality
+        function copyCode() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) {
+                showToast('Nothing to copy!', 'warning');
+                return;
+            }
+            
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Code copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy code', 'error');
+            });
+        }
+
+        // Format code (basic indentation)
+        function formatCode() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) return;
+            
+            // Basic formatting (can be enhanced with prettier later)
+            let formatted = code;
+            
+            // Basic indentation for common structures
+            if (appState.detectedLanguage) {
+                // This is a simplified formatter
+                formatted = code
+                    .replace(/\{/g, '{\n    ')
+                    .replace(/\}/g, '\n}')
+                    .replace(/;/g, ';\n');
+            }
+            
+            document.getElementById('codeInput').value = formatted;
+            updateDetection();
+            showToast('Code formatted', 'success');
+        }
+
+        // Syntax highlighting toggle
+        function toggleSyntax() {
+            appState.syntaxHighlighting = !appState.syntaxHighlighting;
+            const codeInput = document.getElementById('codeInput');
+            const codePreview = document.getElementById('codePreview');
+            
+            if (appState.syntaxHighlighting) {
+                // Show syntax highlighted version
+                const code = codeInput.value;
+                const langClass = appState.detectedLanguage ? 
+                    `language-${appState.detectedLanguage}` : 'language-plaintext';
+                
+                codePreview.className = langClass;
+                codePreview.querySelector('code').textContent = code;
+                
+                // Apply Prism highlighting
+                if (window.Prism) {
+                    Prism.highlightElement(codePreview.querySelector('code'));
+                }
+                
+                codeInput.style.display = 'none';
+                codePreview.classList.add('active');
+                
+                showToast('Syntax highlighting enabled', 'success');
+            } else {
+                // Show plain textarea
+                codeInput.style.display = 'block';
+                codePreview.classList.remove('active');
+                
+                showToast('Syntax highlighting disabled', 'success');
+            }
+        }
+
+        // Export functions
+        function exportAsPdf() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) {
+                showToast('Nothing to export!', 'warning');
+                return;
+            }
+            
+            // Use jsPDF
+            if (window.jspdf && window.jspdf.jsPDF) {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(16);
+                doc.text('Code Export', 20, 20);
+                
+                // Add metadata
+                doc.setFontSize(10);
+                doc.text(`Language: ${appState.detectedLanguage || 'Plain Text'}`, 20, 30);
+                doc.text(`Date: ${new Date().toLocaleString()}`, 20, 35);
+                
+                // Add code
+                doc.setFontSize(8);
+                doc.setFont('courier');
+                const lines = code.split('\n');
+                let y = 45;
+                
+                for (const line of lines) {
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(line.substring(0, 80), 20, y);
+                    y += 5;
+                }
+                
+                doc.save(`code_${Date.now()}.pdf`);
+                showToast('PDF exported successfully!', 'success');
+            } else {
+                showToast('PDF export not available', 'error');
+            }
+            
+            document.querySelector('.dropdown').classList.remove('active');
+        }
+
+        function exportAsMarkdown() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) {
+                showToast('Nothing to export!', 'warning');
+                return;
+            }
+            
+            const language = appState.detectedLanguage || 'text';
+            const markdown = `# Code Export
+
+**Language:** ${language}
+**Date:** ${new Date().toLocaleString()}
+
+\`\`\`${language}
+${code}
+\`\`\`
+
+---
+*Exported from Code Paste Tool*`;
+            
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `code_${Date.now()}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast('Markdown exported successfully!', 'success');
+            document.querySelector('.dropdown').classList.remove('active');
+        }
+
+        function createGist() {
+            const code = document.getElementById('codeInput').value;
+            if (!code) {
+                showToast('Nothing to export!', 'warning');
+                return;
+            }
+            
+            const filename = document.getElementById('filenameInput').value.trim() || 'code';
+            const fullFilename = filename.includes('.') ? filename : filename + appState.detectedExtension;
+            
+            // Create anonymous Gist
+            const gistData = {
+                description: 'Code shared from Code Paste Tool',
+                public: true,
+                files: {
+                    [fullFilename]: {
+                        content: code
+                    }
+                }
+            };
+            
+            fetch('https://api.github.com/gists', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gistData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.html_url) {
+                    navigator.clipboard.writeText(data.html_url);
+                    showToast('Gist created! URL copied to clipboard', 'success');
+                    window.open(data.html_url, '_blank');
+                } else {
+                    throw new Error('Failed to create Gist');
+                }
+            })
+            .catch(error => {
+                console.error('Gist creation failed:', error);
+                showToast('Failed to create Gist', 'error');
+            });
+            
+            document.querySelector('.dropdown').classList.remove('active');
+        }
+
+        // Keyboard shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + S: Download
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (!document.getElementById('downloadBtn').disabled) {
+                        downloadFile();
+                    }
+                }
+                
+                // Ctrl/Cmd + K: Clear
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    clearAll();
+                }
+                
+                // Ctrl/Cmd + C: Copy (when not in textarea)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'c' && document.activeElement.id !== 'codeInput') {
+                    e.preventDefault();
+                    copyCode();
+                }
+                
+                // Ctrl/Cmd + H: History
+                if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                    e.preventDefault();
+                    showHistory();
+                }
+            });
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${type === 'success' ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' : 
+                      type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' :
+                      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // PWA Support
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered');
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showToast('New version available! Refresh to update.', 'warning');
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            }
+        }
+
+        // Install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            appState.deferredPrompt = e;
+            
+            // Show install prompt
+            const installPrompt = document.getElementById('installPrompt');
+            installPrompt.classList.add('active');
         });
-        downloadBtn.addEventListener('click', downloadFile);
-        clearBtn.addEventListener('click', clearAll);
-        
-        // Allow Enter key to download when filename input is focused
-        filenameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !downloadBtn.disabled) {
-                downloadFile();
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (appState.deferredPrompt) {
+                appState.deferredPrompt.prompt();
+                const { outcome } = await appState.deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    showToast('App installed successfully!', 'success');
+                }
+                
+                appState.deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('active');
             }
         });
+
+        document.getElementById('dismissInstall').addEventListener('click', () => {
+            document.getElementById('installPrompt').classList.remove('active');
+        });
+
+        document.getElementById('laterBtn').addEventListener('click', () => {
+            document.getElementById('installPrompt').classList.remove('active');
+        });
+
+        // Online/Offline indicator
+        function setupOnlineOfflineIndicator() {
+            const indicator = document.getElementById('offlineIndicator');
+            
+            function updateOnlineStatus() {
+                if (!navigator.onLine) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            }
+            
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            
+            updateOnlineStatus();
+        }
     </script>
 </body>
 </html>

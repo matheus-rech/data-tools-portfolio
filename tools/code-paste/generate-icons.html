@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Generate PNG Icons from SVG</title>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <p>Open this file in a browser, then right-click each icon and save as PNG.</p>
+    
+    <h2>192x192 Icon</h2>
+    <img src="icon-192.svg" width="192" height="192" id="icon192">
+    <br>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <br>
+    <a id="download192" download="icon-192.png">Download 192x192 PNG</a>
+    
+    <h2>512x512 Icon</h2>
+    <img src="icon-512.svg" width="512" height="512" id="icon512">
+    <br>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <br>
+    <a id="download512" download="icon-512.png">Download 512x512 PNG</a>
+    
+    <script>
+        function convertSvgToPng(imgId, canvasId, downloadId) {
+            const img = document.getElementById(imgId);
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const download = document.getElementById(downloadId);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    download.href = url;
+                    download.style.display = 'inline-block';
+                    download.style.padding = '10px';
+                    download.style.background = '#667eea';
+                    download.style.color = 'white';
+                    download.style.textDecoration = 'none';
+                    download.style.borderRadius = '5px';
+                    download.style.marginTop = '10px';
+                });
+            };
+            
+            // Trigger load if already loaded
+            if (img.complete) {
+                img.onload();
+            }
+        }
+        
+        // Convert both icons
+        window.addEventListener('load', function() {
+            convertSvgToPng('icon192', 'canvas192', 'download192');
+            convertSvgToPng('icon512', 'canvas512', 'download512');
+        });
+    </script>
+</body>
+</html>
