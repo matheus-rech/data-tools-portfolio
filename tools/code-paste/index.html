@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Paste & Download Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .code-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .detection-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .detection-info.active {
+            display: block;
+        }
+
+        .detection-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .detected-language {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .confidence {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .filename-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .filename-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .language-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .badge {
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Code Paste Tool</h1>
+        <p class="subtitle">Paste your code and download it with the correct file extension</p>
+        
+        <div class="code-container">
+            <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+            <div class="char-count" id="charCount">0 characters</div>
+        </div>
+
+        <div class="detection-info" id="detectionInfo">
+            <div class="detection-label">Detected Language:</div>
+            <span class="detected-language" id="detectedLang">Unknown</span>
+            <span class="confidence" id="confidence"></span>
+        </div>
+
+        <input type="text" id="filenameInput" class="filename-input" placeholder="Enter filename (e.g., main or script)">
+
+        <div class="button-group">
+            <button class="btn-primary" id="downloadBtn" disabled>Download File</button>
+            <button class="btn-secondary" id="clearBtn">Clear</button>
+        </div>
+
+        <div class="language-badges">
+            <span class="badge">JavaScript</span>
+            <span class="badge">Python</span>
+            <span class="badge">Java</span>
+            <span class="badge">C++</span>
+            <span class="badge">HTML</span>
+            <span class="badge">CSS</span>
+            <span class="badge">PHP</span>
+            <span class="badge">Ruby</span>
+            <span class="badge">Go</span>
+            <span class="badge">Swift</span>
+            <span class="badge">Kotlin</span>
+            <span class="badge">TypeScript</span>
+            <span class="badge">Rust</span>
+            <span class="badge">SQL</span>
+            <span class="badge">Shell</span>
+            <span class="badge">And more...</span>
+        </div>
+    </div>
+
+    <script>
+        const languagePatterns = {
+            javascript: {
+                extensions: ['.js', '.jsx'],
+                patterns: [
+                    /\bfunction\s+\w+\s*\(/,
+                    /\bconst\s+\w+\s*=/,
+                    /\blet\s+\w+\s*=/,
+                    /\bvar\s+\w+\s*=/,
+                    /console\.\w+/,
+                    /\=\>/,
+                    /\bimport\s+.*\s+from/,
+                    /\bexport\s+(default\s+)?/,
+                    /\brequire\s*\(/,
+                    /\bmodule\.exports/,
+                    /\basync\s+function/,
+                    /\bawait\s+/
+                ],
+                keywords: ['function', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'return', 'console', 'async', 'await']
+            },
+            python: {
+                extensions: ['.py'],
+                patterns: [
+                    /\bdef\s+\w+\s*\(/,
+                    /\bclass\s+\w+/,
+                    /\bimport\s+\w+/,
+                    /\bfrom\s+\w+\s+import/,
+                    /\bif\s+.*:/,
+                    /\belif\s+.*:/,
+                    /\belse\s*:/,
+                    /\bfor\s+\w+\s+in\s+/,
+                    /\bwhile\s+.*:/,
+                    /\bprint\s*\(/,
+                    /\b__init__\s*\(/,
+                    /\bself\./,
+                    /\bif\s+__name__\s*==\s*['"]__main__['"]/
+                ],
+                keywords: ['def', 'class', 'import', 'from', 'if', 'elif', 'else', 'for', 'while', 'return', 'print', 'self', 'None', 'True', 'False']
+            },
+            java: {
+                extensions: ['.java'],
+                patterns: [
+                    /\bpublic\s+class\s+\w+/,
+                    /\bprivate\s+\w+\s+\w+/,
+                    /\bprotected\s+\w+\s+\w+/,
+                    /\bpublic\s+static\s+void\s+main/,
+                    /\bSystem\.out\.print/,
+                    /\bimport\s+java\./,
+                    /\bpackage\s+\w+/,
+                    /\bnew\s+\w+\(/,
+                    /\@Override/,
+                    /\bthrows\s+\w+/
+                ],
+                keywords: ['public', 'private', 'protected', 'class', 'interface', 'extends', 'implements', 'static', 'void', 'int', 'String', 'boolean']
+            },
+            cpp: {
+                extensions: ['.cpp', '.cc', '.cxx', '.c++'],
+                patterns: [
+                    /\#include\s*<.*>/,
+                    /\#include\s*".*"/,
+                    /\busing\s+namespace\s+std/,
+                    /\bint\s+main\s*\(/,
+                    /\bcout\s*<</,
+                    /\bcin\s*>>/,
+                    /\bstd::/,
+                    /\btemplate\s*</,
+                    /\bclass\s+\w+\s*{/,
+                    /\bstruct\s+\w+\s*{/
+                ],
+                keywords: ['#include', 'using', 'namespace', 'int', 'void', 'class', 'struct', 'public', 'private', 'protected', 'return', 'if', 'else', 'for', 'while']
+            },
+            c: {
+                extensions: ['.c', '.h'],
+                patterns: [
+                    /\#include\s*<.*\.h>/,
+                    /\#include\s*".*\.h"/,
+                    /\bint\s+main\s*\(/,
+                    /\bprintf\s*\(/,
+                    /\bscanf\s*\(/,
+                    /\bstruct\s+\w+\s*{/,
+                    /\btypedef\s+/,
+                    /\#define\s+/,
+                    /\bvoid\s+\w+\s*\(/
+                ],
+                keywords: ['#include', 'int', 'void', 'char', 'float', 'double', 'struct', 'typedef', 'return', 'if', 'else', 'for', 'while', 'printf', 'scanf']
+            },
+            csharp: {
+                extensions: ['.cs'],
+                patterns: [
+                    /\busing\s+System/,
+                    /\bnamespace\s+\w+/,
+                    /\bpublic\s+class\s+\w+/,
+                    /\bprivate\s+\w+\s+\w+/,
+                    /\bstatic\s+void\s+Main/,
+                    /\bConsole\.Write/,
+                    /\bvar\s+\w+\s*=/,
+                    /\basync\s+Task/,
+                    /\bawait\s+/
+                ],
+                keywords: ['using', 'namespace', 'public', 'private', 'protected', 'class', 'interface', 'static', 'void', 'int', 'string', 'var', 'async', 'await']
+            },
+            typescript: {
+                extensions: ['.ts', '.tsx'],
+                patterns: [
+                    /\binterface\s+\w+/,
+                    /\btype\s+\w+\s*=/,
+                    /\bconst\s+\w+:\s*\w+/,
+                    /\blet\s+\w+:\s*\w+/,
+                    /\bfunction\s+\w+.*:\s*\w+/,
+                    /\bimport\s+.*\s+from/,
+                    /\bexport\s+(default\s+)?/,
+                    /\benum\s+\w+/,
+                    /\basync\s+.*:\s*Promise/
+                ],
+                keywords: ['interface', 'type', 'enum', 'const', 'let', 'function', 'class', 'import', 'export', 'async', 'await', 'Promise']
+            },
+            html: {
+                extensions: ['.html', '.htm'],
+                patterns: [
+                    /<!DOCTYPE\s+html>/i,
+                    /<html.*>/,
+                    /<head.*>/,
+                    /<body.*>/,
+                    /<div.*>/,
+                    /<script.*>/,
+                    /<style.*>/,
+                    /<link.*>/,
+                    /<meta.*>/,
+                    /<\/\w+>/
+                ],
+                keywords: ['DOCTYPE', 'html', 'head', 'body', 'div', 'span', 'script', 'style', 'link', 'meta']
+            },
+            css: {
+                extensions: ['.css'],
+                patterns: [
+                    /\w+\s*{[^}]*}/,
+                    /\.\w+\s*{/,
+                    /\#\w+\s*{/,
+                    /\@media\s+/,
+                    /\@import\s+/,
+                    /\@keyframes\s+/,
+                    /:\s*(hover|active|focus|visited)/,
+                    /\w+:\s*[\w\#\-\(\)]+;/
+                ],
+                keywords: ['@media', '@import', '@keyframes', 'display', 'position', 'margin', 'padding', 'color', 'background', 'font-size']
+            },
+            php: {
+                extensions: ['.php'],
+                patterns: [
+                    /<\?php/,
+                    /\$\w+\s*=/,
+                    /\bfunction\s+\w+\s*\(/,
+                    /\bclass\s+\w+/,
+                    /\becho\s+/,
+                    /\brequire(_once)?\s*\(/,
+                    /\binclude(_once)?\s*\(/,
+                    /\bif\s*\(.*\)\s*:/,
+                    /\bforeach\s*\(/,
+                    /\->/
+                ],
+                keywords: ['<?php', 'function', 'class', 'echo', 'print', 'require', 'include', 'if', 'else', 'foreach', 'while', 'return']
+            },
+            ruby: {
+                extensions: ['.rb'],
+                patterns: [
+                    /\bdef\s+\w+/,
+                    /\bclass\s+\w+/,
+                    /\bmodule\s+\w+/,
+                    /\bputs\s+/,
+                    /\brequire\s+['"]/,
+                    /\battr_\w+/,
+                    /\bend$/,
+                    /\bdo\s*\|/,
+                    /\@\w+\s*=/
+                ],
+                keywords: ['def', 'class', 'module', 'end', 'if', 'else', 'elsif', 'unless', 'while', 'for', 'do', 'puts', 'print', 'require']
+            },
+            go: {
+                extensions: ['.go'],
+                patterns: [
+                    /\bpackage\s+\w+/,
+                    /\bimport\s+\(/,
+                    /\bfunc\s+\w+/,
+                    /\bfmt\.Print/,
+                    /\btype\s+\w+\s+struct/,
+                    /\binterface\s*{/,
+                    /\bgoroutine\s+/,
+                    /\bdefer\s+/,
+                    /\:=/
+                ],
+                keywords: ['package', 'import', 'func', 'type', 'struct', 'interface', 'if', 'else', 'for', 'range', 'return', 'defer', 'go']
+            },
+            swift: {
+                extensions: ['.swift'],
+                patterns: [
+                    /\bimport\s+\w+/,
+                    /\bfunc\s+\w+/,
+                    /\bclass\s+\w+/,
+                    /\bstruct\s+\w+/,
+                    /\benum\s+\w+/,
+                    /\bvar\s+\w+/,
+                    /\blet\s+\w+/,
+                    /\bif\s+let\s+/,
+                    /\bguard\s+let\s+/,
+                    /\bprint\(/
+                ],
+                keywords: ['import', 'func', 'class', 'struct', 'enum', 'var', 'let', 'if', 'else', 'for', 'while', 'switch', 'case', 'return']
+            },
+            kotlin: {
+                extensions: ['.kt', '.kts'],
+                patterns: [
+                    /\bfun\s+\w+/,
+                    /\bclass\s+\w+/,
+                    /\bdata\s+class\s+/,
+                    /\bval\s+\w+/,
+                    /\bvar\s+\w+/,
+                    /\bpackage\s+\w+/,
+                    /\bimport\s+\w+/,
+                    /\bprintln\(/,
+                    /\bwhen\s*{/
+                ],
+                keywords: ['fun', 'class', 'data', 'val', 'var', 'if', 'else', 'when', 'for', 'while', 'return', 'package', 'import']
+            },
+            rust: {
+                extensions: ['.rs'],
+                patterns: [
+                    /\bfn\s+\w+/,
+                    /\blet\s+(mut\s+)?\w+/,
+                    /\bstruct\s+\w+/,
+                    /\benum\s+\w+/,
+                    /\bimpl\s+\w+/,
+                    /\buse\s+\w+/,
+                    /\bmod\s+\w+/,
+                    /\bprintln!\(/,
+                    /\bmatch\s+\w+\s*{/
+                ],
+                keywords: ['fn', 'let', 'mut', 'struct', 'enum', 'impl', 'use', 'mod', 'pub', 'if', 'else', 'match', 'for', 'while', 'return']
+            },
+            sql: {
+                extensions: ['.sql'],
+                patterns: [
+                    /\bSELECT\s+/i,
+                    /\bFROM\s+/i,
+                    /\bWHERE\s+/i,
+                    /\bINSERT\s+INTO/i,
+                    /\bUPDATE\s+/i,
+                    /\bDELETE\s+FROM/i,
+                    /\bCREATE\s+TABLE/i,
+                    /\bALTER\s+TABLE/i,
+                    /\bDROP\s+TABLE/i,
+                    /\bJOIN\s+/i
+                ],
+                keywords: ['SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'TABLE', 'DATABASE', 'JOIN', 'ON', 'AND', 'OR']
+            },
+            shell: {
+                extensions: ['.sh', '.bash', '.zsh'],
+                patterns: [
+                    /\#!\/bin\/(bash|sh|zsh)/,
+                    /\becho\s+/,
+                    /\bif\s+\[\[?/,
+                    /\bthen$/,
+                    /\bfi$/,
+                    /\bfor\s+\w+\s+in\s+/,
+                    /\bwhile\s+/,
+                    /\bfunction\s+\w+/,
+                    /\$\w+/,
+                    /\$\{.*\}/
+                ],
+                keywords: ['echo', 'if', 'then', 'else', 'fi', 'for', 'while', 'do', 'done', 'function', 'export', 'source', 'cd', 'ls', 'grep']
+            },
+            yaml: {
+                extensions: ['.yml', '.yaml'],
+                patterns: [
+                    /^\s*\w+:/m,
+                    /^\s*-\s+/m,
+                    /^\s*\w+:\s*$/m,
+                    /^\s*\w+:\s*\|/m,
+                    /^\s*\w+:\s*>/m
+                ],
+                keywords: []
+            },
+            json: {
+                extensions: ['.json'],
+                patterns: [
+                    /^\s*{/,
+                    /^\s*\[/,
+                    /"[^"]+"\s*:/,
+                    /:\s*"[^"]*"/,
+                    /:\s*\d+/,
+                    /:\s*(true|false|null)/
+                ],
+                keywords: []
+            },
+            xml: {
+                extensions: ['.xml'],
+                patterns: [
+                    /<\?xml.*\?>/,
+                    /<\w+.*>/,
+                    /<\/\w+>/,
+                    /<\w+.*\/>/,
+                    /<!--.*-->/
+                ],
+                keywords: []
+            },
+            markdown: {
+                extensions: ['.md'],
+                patterns: [
+                    /^#{1,6}\s+/m,
+                    /^\*{3,}$/m,
+                    /^-{3,}$/m,
+                    /^\s*[-*+]\s+/m,
+                    /^\s*\d+\.\s+/m,
+                    /\[.*\]\(.*\)/,
+                    /```[\s\S]*```/,
+                    /`[^`]+`/
+                ],
+                keywords: []
+            }
+        };
+
+        const codeInput = document.getElementById('codeInput');
+        const filenameInput = document.getElementById('filenameInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const detectionInfo = document.getElementById('detectionInfo');
+        const detectedLang = document.getElementById('detectedLang');
+        const confidence = document.getElementById('confidence');
+        const charCount = document.getElementById('charCount');
+
+        let detectedLanguage = null;
+        let detectedExtension = '.txt';
+
+        function detectLanguage(code) {
+            const scores = {};
+            
+            for (const [lang, config] of Object.entries(languagePatterns)) {
+                let score = 0;
+                
+                // Check patterns
+                for (const pattern of config.patterns) {
+                    const matches = code.match(pattern);
+                    if (matches) {
+                        score += matches.length * 2;
+                    }
+                }
+                
+                // Check keywords
+                for (const keyword of config.keywords) {
+                    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                    const matches = code.match(regex);
+                    if (matches) {
+                        score += matches.length;
+                    }
+                }
+                
+                scores[lang] = score;
+            }
+            
+            // Find the language with the highest score
+            let maxScore = 0;
+            let bestMatch = null;
+            
+            for (const [lang, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestMatch = lang;
+                }
+            }
+            
+            // Calculate confidence
+            const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+            const confidenceLevel = totalScore > 0 ? (maxScore / totalScore * 100).toFixed(0) : 0;
+            
+            return {
+                language: bestMatch,
+                confidence: confidenceLevel,
+                extension: bestMatch ? languagePatterns[bestMatch].extensions[0] : '.txt'
+            };
+        }
+
+        function updateDetection() {
+            const code = codeInput.value.trim();
+            
+            if (code) {
+                const result = detectLanguage(code);
+                
+                if (result.language) {
+                    detectedLanguage = result.language;
+                    detectedExtension = result.extension;
+                    detectedLang.textContent = result.language.charAt(0).toUpperCase() + result.language.slice(1);
+                    confidence.textContent = `(${result.confidence}% confidence)`;
+                    detectionInfo.classList.add('active');
+                } else {
+                    detectedLanguage = null;
+                    detectedExtension = '.txt';
+                    detectedLang.textContent = 'Plain Text';
+                    confidence.textContent = '';
+                    detectionInfo.classList.add('active');
+                }
+                
+                downloadBtn.disabled = false;
+            } else {
+                detectionInfo.classList.remove('active');
+                downloadBtn.disabled = true;
+                detectedLanguage = null;
+                detectedExtension = '.txt';
+            }
+            
+            charCount.textContent = `${code.length} characters`;
+        }
+
+        function downloadFile() {
+            const code = codeInput.value;
+            if (!code) return;
+            
+            const filename = filenameInput.value.trim() || 'code';
+            const fullFilename = filename.includes('.') ? filename : filename + detectedExtension;
+            
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fullFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function clearAll() {
+            codeInput.value = '';
+            filenameInput.value = '';
+            detectionInfo.classList.remove('active');
+            downloadBtn.disabled = true;
+            charCount.textContent = '0 characters';
+            detectedLanguage = null;
+            detectedExtension = '.txt';
+        }
+
+        // Event listeners
+        codeInput.addEventListener('input', updateDetection);
+        codeInput.addEventListener('paste', () => {
+            setTimeout(updateDetection, 10);
+        });
+        downloadBtn.addEventListener('click', downloadFile);
+        clearBtn.addEventListener('click', clearAll);
+        
+        // Allow Enter key to download when filename input is focused
+        filenameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !downloadBtn.disabled) {
+                downloadFile();
+            }
+        });
+    </script>
+</body>
+</html>
